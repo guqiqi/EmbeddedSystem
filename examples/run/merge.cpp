@@ -56,10 +56,24 @@ void drawDetectLines2(Mat &image, const vector<Vec4i> &lines, Scalar &color) {
     }
 }
 
-int detectLineNumberGOne(const vector<Vec4i> &lines) {
-    if (lines.size() <= 1) {
-        return 0;
-    } else return 1;
+int detectLineNumberGOne(const vector<Vec4i>& lines){
+    if (lines.size() <= 1){
+        return false;
+    }
+    
+    double slope = (lines[0][3] - lines[0][1]) * 1.0 / (lines[0][2] - lines[0][0]);
+    int flag1 = slope > 0 ? 1 : -1;
+
+    for (int i = 1; i < lines.size(); i++){
+        slope = (lines[i][3] - lines[i][1]) * 1.0 / (lines[i][2] - lines[i][0]);
+        int flag2 = slope > 0 ? 1: -1;
+
+        if (flag1 != flag2){
+            return true;
+        }
+    }
+    
+    return false;
 }
 
 
@@ -218,14 +232,15 @@ int main() {
 
         int twoLineChecker = detectLineNumberGOne(lines);
         if (twoLineChecker == false) {
-            Point p0(lines[0][0], lines[0][1]);
-            Point p1(lines[0][2], lines[0][3]);
-            double k0 = (p0.y - p1.y) * 1.0 / (p0.x - p1.x);
+			if (lines.size() > 0){
+				Point p0(lines[0][0], lines[0][1]);
+				Point p1(lines[0][2], lines[0][3]);
+				double k0 = (p0.y - p1.y) * 1.0 / (p0.x - p1.x);
 
-            // calculate the angle to turn
-            int angle = (int)(atan(k0) / M_PI * 180.0);
-            turnTo(angle);
-
+				// calculate the angle to turn
+				int angle = (int)(atan(k0) / M_PI * 180.0);
+				turnTo(angle);
+			}
             drawDetectLines2(canvas, result, sc);
             imshow("canvas", canvas);
         } else {
