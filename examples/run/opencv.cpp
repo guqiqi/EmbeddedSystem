@@ -11,6 +11,9 @@ extern void func5();
 using namespace cv;
 using namespace std;
 
+#define true 1
+#define false 0
+
 int IMAGE_WIDTH = 0;
 int IMAGE_HEIGHT = 0;
 const double DIVIDE = 9/4;
@@ -47,6 +50,14 @@ void drawDetectLines2(Mat& image, const vector<Vec4i>& lines, Scalar& color)
     }
 }
 
+int detectLineNumberGOne(const vector<Vec4i>& lines){
+    if (lines.size() <= 1){
+        return 0;
+    }
+    else return 1;
+}
+
+
 vector<double> getCrossPoint(const vector<Vec4i>& lines){
     Point p1(lines[0][0], lines[0][1]);
     Point p2(lines[0][2], lines[0][3]);
@@ -69,6 +80,7 @@ vector<double> getCrossPoint(const vector<Vec4i>& lines){
 
     return result;
 }
+
 
 
 vector<Vec4i> caluculateMaxTwoLines(const vector<Vec4i>& lines){
@@ -112,10 +124,10 @@ vector<Vec4i> caluculateMaxTwoLines(const vector<Vec4i>& lines){
 
     result.push_back(Vec4i(dot1x, dot1y+IMAGE_HEIGHT/DIVIDE, dot2x, dot2y+IMAGE_HEIGHT/DIVIDE));
 
-    cout << "Fucking length" <<result.size();
-    for (vector<Vec4i>::iterator it = result.begin(); it != result.end(); it++)
-        cout << (*it);
-    cout << "Fucking length" <<result.size();
+    // cout << "Fucking length" <<result.size();
+    // for (vector<Vec4i>::iterator it = result.begin(); it != result.end(); it++)
+    //     cout << (*it);
+    // cout << "Fucking length" <<result.size();
     return result;
 }
 
@@ -134,7 +146,7 @@ int main(){
     Mat element = getStructuringElement(MORPH_ELLIPSE, Size(4, 5));
     dilate(image, image, element);
     erode(image, image, element);
-    imshow("Blur", image);
+    // imshow("Blur", image);
     // imshow("erode", image);
 
     Rect roi(0, image.rows/DIVIDE, image.cols, image.rows/3);
@@ -144,34 +156,45 @@ int main(){
     // cvtColor(imgROI, grayImage, CV_BGR2GRAY);     
     Mat contours;
     Canny(imgROI, contours, 80, 250);   // void cvCanny(const CvArr* image, CvArr* edges, double threshold1, double threshold2, int aperture_size=3)
-    imshow("Canny", contours);
+    // imshow("Canny", contours);
     threshold(contours, contours, 100, 255, THRESH_BINARY);
 
-    imshow("imgR", contours);
+    // imshow("imgR", contours);
 
     // 检测直线，最小投票为90，线条不短于50，间隙不小于10
     vector<Vec4i> lines, result; 
     HoughLinesP(contours,lines,1,CV_PI/180,80,30,10); 
-    
-    result = caluculateMaxTwoLines(lines);
-    vector<double> pointX = getCrossPoint(result);
-    cout << "begin" << endl;
-    for (vector<Vec4i>::iterator it = lines.begin(); it != lines.end(); it++)
-        cout << (*it);
-    cout << "end" << endl;
-    // cout << "\n------";
-    // for (int i = 0; i < 10; i++)
-    //     cout << result[i];
-
     Scalar sc(0, 255, 0);
     Mat canvas(image.size(), CV_8UC3, Scalar(255));
-    drawDetectLines(imgROI, lines, sc);
-    drawDetectLines2(canvas, result, sc);
     
-    imshow("f",image);
-    imshow("c",canvas);
 
-    waitKey(0);
+    int twoLineChecker = detectLineNumberGOne(lines);
+    if (twoLineChecker == false){
+        Point p0(lines[0][0], lines[0][1]);
+        Point p1(lines[0][2], lines[0][3]);
+        double k0 = (p0.y-p1.y) *1.0 / (p0.x-p1.x);
 
+        drawDetectLines2(canvas, result, sc);
+        imshow("canvas",canvas);
+    }
+    else{
+        result = caluculateMaxTwoLines(lines);
+        vector<double> pointX = getCrossPoint(result);
+        cout << "begin" << endl;
+        for (vector<Vec4i>::iterator it = lines.begin(); it != lines.end(); it++)
+            cout << (*it);
+        cout << "end" << endl;
+
+        drawDetectLines2(canvas, lines, sc);
+        imshow("canvas",canvas);
+    }
+
+    
+    drawDetectLines(imgROI, lines, sc);     
+    imshow("image",image);
+    
+    lines.clear();
+    result.clear();
+    waitKey(5);
 }
    
