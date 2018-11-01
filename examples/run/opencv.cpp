@@ -33,16 +33,6 @@ void drawDetectLines(Mat& image, const vector<Vec4i>& lines, Scalar& color)
 
 void drawDetectLines2(Mat& image, const vector<Vec4i>& lines, Scalar& color)
 {
-    // 将检测到的直线在图上画出来
-    // vector<Vec4i>::const_iterator it=lines.begin();
-    // while(it!=lines.end())
-    // {
-    //     Point pt1((*it)[0],(*it)[1]+IMAGE_HEIGHT/3);
-    //     Point pt2((*it)[2],(*it)[3]+IMAGE_HEIGHT/3);
-    //     line(image, pt1, pt2,color, 3); //  线条宽度设置为2
-    //     ++it;
-    // }
-
     for (int i = 0; i < 2; i++){
         Point pt1(lines[i][0],lines[i][1]);
         Point pt2(lines[i][2],lines[i][3]);
@@ -185,7 +175,7 @@ int main(){
             cout << (*it);
         cout << "end" << endl;
 
-        drawDetectLines2(canvas, lines, sc);
+        drawDetectLines(canvas, lines, sc);
         imshow("canvas",canvas);
     }
 
