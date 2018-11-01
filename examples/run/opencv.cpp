@@ -33,6 +33,16 @@ void drawDetectLines(Mat& image, const vector<Vec4i>& lines, Scalar& color)
 
 void drawDetectLines2(Mat& image, const vector<Vec4i>& lines, Scalar& color)
 {
+    // 将检测到的直线在图上画出来
+    // vector<Vec4i>::const_iterator it=lines.begin();
+    // while(it!=lines.end())
+    // {
+    //     Point pt1((*it)[0],(*it)[1]+IMAGE_HEIGHT/3);
+    //     Point pt2((*it)[2],(*it)[3]+IMAGE_HEIGHT/3);
+    //     line(image, pt1, pt2,color, 3); //  线条宽度设置为2
+    //     ++it;
+    // }
+
     for (int i = 0; i < 2; i++){
         Point pt1(lines[i][0],lines[i][1]);
         Point pt2(lines[i][2],lines[i][3]);
@@ -42,9 +52,22 @@ void drawDetectLines2(Mat& image, const vector<Vec4i>& lines, Scalar& color)
 
 int detectLineNumberGOne(const vector<Vec4i>& lines){
     if (lines.size() <= 1){
-        return 0;
+        return false;
     }
-    else return 1;
+    
+    double slope = (lines[0][3] - lines[0][1]) * 1.0 / (lines[0][2] - lines[0][0]);
+    int flag1 = slope > 0 ? 1 : -1;
+
+    for (int i = 1; i < lines.size(); i++){
+        slope = (lines[i][3] - lines[i][1]) * 1.0 / (lines[i][2] - lines[i][0]);
+        int flag2 = slope > 0 ? 1: -1;
+
+        if (flag1 != flag2){
+            return true;
+        }
+    }
+    
+    return false;
 }
 
 
@@ -56,7 +79,7 @@ vector<double> getCrossPoint(const vector<Vec4i>& lines){
 
     vector<double> result;
 
-    cout << p1.x << p1.y << p2.x<< p2.y;
+    // cout << p1.x << p1.y << p2.x<< p2.y;
     double k1 = (p1.y - p2.y) * 1.0/(p1.x - p2.x);
     double k3 = (p3.y - p4.y) * 1.0/(p3.x - p4.x);
 
@@ -64,7 +87,7 @@ vector<double> getCrossPoint(const vector<Vec4i>& lines){
     double y0 = k1*(x0-p1.x)+p1.y;
     double y1 = k3*(x0-p3.x)+p3.y;
 
-    cout << "x0:" << x0 << "y1:" << y1 << endl;
+    cout << endl << "x0:" << x0 << "y0:" << y0 <<"y1:" << y1 << endl;
     result.push_back(x0-320);
     result.push_back(y0);
 
@@ -123,13 +146,12 @@ vector<Vec4i> caluculateMaxTwoLines(const vector<Vec4i>& lines){
 
 int main(){
     // cols = 640, rows = 480
-    Mat image = imread("image/b.png");
+    Mat image = imread("image/11.jpg");
     cout << image.rows;
     IMAGE_HEIGHT = image.rows;
     IMAGE_WIDTH = image.cols;
     //Mat image, image2;
     
-    Mat imageSingle;
     // cvtColor(image, image, CV_RGB2GRAY);
     // inRange(image, Scalar(45, 55, 45), Scalar(150, 150, 150), image);
     GaussianBlur(image, image, Size(5, 5), 0, 0);
@@ -159,12 +181,14 @@ int main(){
     
 
     int twoLineChecker = detectLineNumberGOne(lines);
+    cout << endl << "twoLineDetector:" << twoLineChecker << endl;
     if (twoLineChecker == false){
-        Point p0(lines[0][0], lines[0][1]);
-        Point p1(lines[0][2], lines[0][3]);
-        double k0 = (p0.y-p1.y) *1.0 / (p0.x-p1.x);
-
-        drawDetectLines2(canvas, result, sc);
+        if (lines.size() > 0){
+            Point p0(lines[0][0], lines[0][1]);
+            Point p1(lines[0][2], lines[0][3]);
+            double k0 = (p0.y-p1.y) *1.0 / (p0.x-p1.x);
+        }
+        drawDetectLines(canvas, lines, sc);
         imshow("canvas",canvas);
     }
     else{
@@ -175,7 +199,7 @@ int main(){
             cout << (*it);
         cout << "end" << endl;
 
-        drawDetectLines(canvas, lines, sc);
+        drawDetectLines2(canvas, result, sc);
         imshow("canvas",canvas);
     }
 
@@ -183,8 +207,8 @@ int main(){
     drawDetectLines(imgROI, lines, sc);     
     imshow("image",image);
     
-    lines.clear();
-    result.clear();
-    waitKey(5);
+    //lines.clear();
+    //result.clear();
+    waitKey(0);
 }
    
