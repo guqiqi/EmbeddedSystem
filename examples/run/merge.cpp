@@ -48,8 +48,8 @@ void drawDetectLines(Mat &image, const vector<Vec4i> &lines, Scalar &color) {
     }
 }
 
-void drawDetectLines2(Mat &image, const vector<Vec4i> &lines, Scalar &color) {
-    for (int i = 0; i < 2; i++) {
+void drawDetectLines2(Mat &image, const vector<Vec4i> &lines, Scalar &color, int index) {
+    for (int i = 0; i < index; i++) {
         Point pt1(lines[i][0], lines[i][1]);
         Point pt2(lines[i][2], lines[i][3]);
         line(image, pt1, pt2, color, 3);
@@ -216,6 +216,11 @@ int main() {
         // Mat grayImage;
         // cvtColor(imgROI, grayImage, CV_BGR2GRAY);
         Mat contours;
+        inRange(imgROI, Scalar(20,20,30), Scalar(100,100,100), imgROI);
+        Mat element = getStructuringElement(MORPH_ELLIPSE, Size(4, 5));
+        dilate(imgROI, imgROI, element);
+        erode(imgROI, imgROI, element);
+
         Canny(imgROI, contours, 80,
               250);   // void cvCanny(const CvArr* image, CvArr* edges, double threshold1, double threshold2, int aperture_size=3)
         // imshow("Canny", contours);
@@ -238,24 +243,29 @@ int main() {
 				double k0 = (p0.y - p1.y) * 1.0 / (p0.x - p1.x);
 
 				// calculate the angle to turn
+                cout << k0<< endl;
 				int angle = (int)(atan(k0) / M_PI * 180.0);
+                cout << "angle1: " << angle << endl;
 				turnTo(angle);
-			}
-            drawDetectLines2(canvas, result, sc);
+
+                drawDetectLines2(canvas, result, sc, 1);
+            }
+            
             imshow("canvas", canvas);
         } else {
             result = caluculateMaxTwoLines(lines);
             vector<double> pointX = getCrossPoint(result);
 
             double angle = atan(pointX[0]*1.0/pointX[1]) / M_PI * 180.0;
-            turnTo((int)(-1.0 * angle));
+            cout << "angle2: " << angle << endl;
+            turnTo((int)angle);
 
             cout << "begin" << endl;
             for (vector<Vec4i>::iterator it = lines.begin(); it != lines.end(); it++)
                 cout << (*it);
             cout << "end" << endl;
 
-            drawDetectLines(canvas, lines, sc);
+            drawDetectLines2(canvas, result, sc, 2);
             imshow("canvas", canvas);
         }
 
@@ -266,7 +276,7 @@ int main() {
         lines.clear();
         result.clear();
 
-        waitKey(5);
+        waitKey(0);
 
     }
 
