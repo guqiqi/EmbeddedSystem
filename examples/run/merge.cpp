@@ -124,7 +124,7 @@ vector<Vec4i> caluculateMaxTwoLines(const vector<Vec4i> &lines) {
 
     result.push_back(Vec4i(dot1x, dot1y + IMAGE_HEIGHT / DIVIDE, dot2x, dot2y + IMAGE_HEIGHT / DIVIDE));
 
-    slope1 = (dot1x - dot2x) * 1.0 / (dot1y - dot2y);
+    slope1 = (dot1y - dot2y) * 1.0 / (dot1x - dot2x);
     flag1 = slope1 > 0 ? 1 : -1;
 
     for (vector<Vec4i>::const_iterator it = lines.begin(); it != lines.end(); it++) {
@@ -132,12 +132,12 @@ vector<Vec4i> caluculateMaxTwoLines(const vector<Vec4i> &lines) {
         double edge2 = pow(((*it)[1] - (*it)[3]), 2);
         double length = sqrt(edge1 + edge2);
 
-        slope2 = ((*it)[0] - (*it)[2]) * 1.0 / ((*it)[1] - (*it)[3]);
+        slope2 = ((*it)[1] - (*it)[3]) * 1.0 / ((*it)[0] - (*it)[2]);
         flag2 = slope2 > 0 ? 1 : -1;
 
         //cout << endl<<"max1" << max1 << "max2"  << max2 << "length"<<length<< endl << "flag1" << flag1 << "flag2"<<flag2 << "slope2" << slope2 <<endl;
 
-        if (max2 < length && length < max1 && flag1 != flag2) {
+        if (max2 < length && length < max1 && flag1 != flag2 && abs(slope2) > 0.2) {
             dot1x = (*it)[0];
             dot1y = (*it)[1];
             dot2x = (*it)[2];
