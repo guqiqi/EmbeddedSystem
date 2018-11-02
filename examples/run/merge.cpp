@@ -31,8 +31,6 @@ const int HOUGH_THRESHOLD = 150;
 #define true 1
 #define false 0
 
-int readingLeft = 0, readingRight = 0;
-
 // speed of the car
 const int speed = 10;
 // default angle with the wheel
@@ -226,29 +224,14 @@ int main() {
     clog << "Frame Size: " << dWidth << "x" << dHeight << endl;
 
     Mat image;
-    while (totalLeft < 100){
+    while (true){
         // run control
         capture >> image;
         if (image.empty())
             break;
 
         resetCounter();
-        delay(1000);
-        getCounter(&readingLeft, &readingRight);
-        if (readingLeft == -1 || readingRight == -1)
-        {
-            printf("Error!\n");
-            continue;
-        }
-        // Distance is in mm.
-        // M_PI is default number of PI 3.1415……
-        double distanceLeft = readingLeft * 63.4 * M_PI / 390;
-        double distanceRight = readingRight * 63.4 * M_PI / 390;
-
-        totalLeft += distanceLeft / 10;
-        totalRight += distanceRight / 10;
-        printf("Left wheel moved %.2lf cm, right wheel moved %.2lf cm in last second.\n", distanceLeft / 10,
-               distanceRight / 10);
+        delay(100);
 
         // image resolve
         GaussianBlur(image, image, Size(5, 5), 0, 0);
@@ -291,9 +274,11 @@ int main() {
 				Point p1(lines[0][2], lines[0][3]);
 				double k0 = (p0.y - p1.y) * 1.0 / (p0.x - p1.x);
 
+                double temp1 = oldAngle;
 				// calculate the angle to turn
                 angle = getAngleBySlope(k0);
-				turnTo(angle);
+				turnTo(angle-temp1);
+                cout << "turn angle: " << (angle - temp1) << endl;
 
                 drawDetectLines2(canvas, result, sc, 1);
             }
@@ -305,9 +290,11 @@ int main() {
 
             double angle = atan(pointX[0]*1.0/pointX[1]) / M_PI * 180.0;
 
+            double temp2 = oldAngle;
             // calculate the angle to turn
             angle = getAngleByPoint(pointX[0], pointX[1]);
-            turnTo((int)angle);
+            turnTo(angle - temp2);
+            cout << "turn angle: " << (angle - temp2) << endl;
 
             cout << "begin" << endl;
             for (vector<Vec4i>::iterator it = lines.begin(); it != lines.end(); it++)
@@ -325,13 +312,8 @@ int main() {
         lines.clear();
         result.clear();
 
-        waitKey(0);
-
+        waitKey(1);
     }
-
-    // stop
-    stopLeft();
-    stopRight();
 
     return 0;
 }
