@@ -33,9 +33,57 @@ const int HOUGH_THRESHOLD = 150;
 
 int readingLeft = 0, readingRight = 0;
 
+// speed of the car
+const int speed = 10;
+// default angle with the wheel
+const int wheel = 2;
+// default solpe of the left line in camera
+const double defaultSlope = 1.0;
+// params of PID
+const double kp = 1;
+const double ki = 0.002;
+const double kd = 0.003;
+
+double oldAngle = 0.0;
+
 int IMAGE_WIDTH = 0;
 int IMAGE_HEIGHT = 0;
 const double DIVIDE = 9 / 4;
+
+int getAngleByPoint(double x, double y)
+{
+    double angle = atan(x / y) / M_PI * 180.0;
+
+    cout << "tempAngle: " << angle << endl;
+    int turnAngle = kp * angle + ki * (angle + oldAngle) * speed + kd * (angle - oldAngle);
+    oldAngle = angle;
+
+    return turnAngle;
+}
+
+int getAngleBySlope(double slope)
+{
+    cout << "slope: " << slope << endl;
+    double angle = 0.0;
+    if (slope > 0 && slope < defaultSlope)
+    {
+        angle = 90.0 - atan(slope) / M_PI * 180.0;
+    }
+    else if (slope < 0 && slope > (-1.0 * defaultSlope))
+    {
+        angle = 90.0 + atan(slope) / M_PI * 180.0;
+    }
+    else
+    {
+        angle = oldAngle;
+    }
+
+    cout << "tempAngle: " << angle << endl;
+    int turnAngle = kp * angle + ki * (angle + oldAngle) * speed + kd * (angle - oldAngle);
+    oldAngle = angle;
+
+    return turnAngle;
+}
 
 void drawDetectLines(Mat &image, const vector<Vec4i> &lines, Scalar &color) {
     // 将检测到的直线在图上画出来
@@ -234,8 +282,9 @@ int main() {
         Scalar sc(0, 255, 0);
         Mat canvas(image.size(), CV_8UC3, Scalar(255));
 
-
         int twoLineChecker = detectLineNumberGOne(lines);
+
+        int angle = 0;
         if (twoLineChecker == false) {
 			if (lines.size() > 0){
 				Point p0(lines[0][0], lines[0][1]);
@@ -243,9 +292,7 @@ int main() {
 				double k0 = (p0.y - p1.y) * 1.0 / (p0.x - p1.x);
 
 				// calculate the angle to turn
-                cout << k0<< endl;
-				int angle = (int)(atan(k0) / M_PI * 180.0);
-                cout << "angle1: " << angle << endl;
+                angle = getAngleBySlope(k0);
 				turnTo(angle);
 
                 drawDetectLines2(canvas, result, sc, 1);
@@ -257,7 +304,9 @@ int main() {
             vector<double> pointX = getCrossPoint(result);
 
             double angle = atan(pointX[0]*1.0/pointX[1]) / M_PI * 180.0;
-            cout << "angle2: " << angle << endl;
+
+            // calculate the angle to turn
+            angle = getAngleByPoint(pointX[0], pointX[1]);
             turnTo((int)angle);
 
             cout << "begin" << endl;
