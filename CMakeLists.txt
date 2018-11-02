@@ -16,4 +16,4 @@ add_executable(EmbeddedSystem
 #        examples/GPIO/servo.cpp
         examples/OpenCV/main.cpp
         lib/GPIOlib.h
-        CMakeLists.txt "Basic Principle/test.cpp" examples/run/demo.cpp)
+        CMakeLists.txt "Basic Principle/test.cpp" examples/run/demo.cpp examples/GPIO/test.cpp)

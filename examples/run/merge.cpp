@@ -47,13 +47,20 @@ double oldAngle = 0.0;
 int IMAGE_WIDTH = 0;
 int IMAGE_HEIGHT = 0;
 const double DIVIDE = 9 / 4;
-
 int getAngleByPoint(double x, double y)
 {
-    double angle = atan(x / y) / M_PI * 180.0;
+    double angle = atan(x / y) / PI * 180.0;
 
     cout << "tempAngle: " << angle << endl;
     int turnAngle = kp * angle + ki * (angle + oldAngle) * speed + kd * (angle - oldAngle);
+    
+    cout << "angle" << turnAngle << endl;    
+
+    if(turnAngle > 44)
+	turnAngle = 44;
+    if(turnAngle < -44)
+	turnAngle = -44;
+    
     oldAngle = angle;
 
     return turnAngle;
@@ -65,21 +72,30 @@ int getAngleBySlope(double slope)
     double angle = 0.0;
     if (slope > 0 && slope < defaultSlope)
     {
-        angle = 90.0 - atan(slope) / M_PI * 180.0;
+        angle = (atan(slope) / M_PI * 180.0) - (atan(defaultSlope) / M_PI * 180.0);
+        angle = -1.0 * angle;
     }
     else if (slope < 0 && slope > (-1.0 * defaultSlope))
     {
-        angle = 90.0 + atan(slope) / M_PI * 180.0;
+        angle = (atan(-1.0 * defaultSlope) / M_PI * 180.0) -(atan(slope) / M_PI * 180.0);
     }
     else
     {
-        angle = oldAngle;
+        angle = 0.0;
     }
 
     cout << "tempAngle: " << angle << endl;
     int turnAngle = kp * angle + ki * (angle + oldAngle) * speed + kd * (angle - oldAngle);
+    //turnAngle = kp * angle;
+    cout << endl;
     oldAngle = angle;
 
+    cout << "angle" << turnAngle << endl;
+
+    if(turnAngle > 44)
+	turnAngle = 44;
+    if(turnAngle < -44)
+	turnAngle = -44;
     return turnAngle;
 }
 
@@ -204,8 +220,6 @@ vector<Vec4i> caluculateMaxTwoLines(const vector<Vec4i> &lines) {
 int main() {
     // init the car
     init();
-    controlLeft(FORWARD, 10);
-    controlRight(FORWARD, 10);
 
     // distance is in cm
     double totalLeft = 0;
@@ -223,6 +237,7 @@ int main() {
     double dHeight = capture.get(CV_CAP_PROP_FRAME_HEIGHT);        //the height of frames of the video
     clog << "Frame Size: " << dWidth << "x" << dHeight << endl;
 
+    int counter = 0;
     Mat image;
     while (true){
         // run control
@@ -231,15 +246,10 @@ int main() {
             break;
 
         resetCounter();
-        delay(100);
+        delay(10);
 
         // image resolve
-        GaussianBlur(image, image, Size(5, 5), 0, 0);
-        Mat element = getStructuringElement(MORPH_ELLIPSE, Size(4, 5));
-        dilate(image, image, element);
-        erode(image, image, element);
-        // imshow("Blur", image);
-        // imshow("erode", image);
+        // GaussianBlur(image, image, Size(5, 5), 0, 0);
 
         Rect roi(0, image.rows / DIVIDE, image.cols, image.rows / 3);
         Mat imgROI = image(roi);
@@ -247,14 +257,12 @@ int main() {
         // Mat grayImage;
         // cvtColor(imgROI, grayImage, CV_BGR2GRAY);
         Mat contours;
-        inRange(imgROI, Scalar(20,20,30), Scalar(100,100,100), imgROI);
+        inRange(imgROI, Scalar(20,20,30), Scalar(140,140,140), imgROI);
         Mat element = getStructuringElement(MORPH_ELLIPSE, Size(4, 5));
         dilate(imgROI, imgROI, element);
         erode(imgROI, imgROI, element);
 
-        Canny(imgROI, contours, 80,
-              250);   // void cvCanny(const CvArr* image, CvArr* edges, double threshold1, double threshold2, int aperture_size=3)
-        // imshow("Canny", contours);
+        Canny(imgROI, contours, 60, 250);
         threshold(contours, contours, 100, 255, THRESH_BINARY);
 
         // imshow("imgR", contours);
@@ -269,18 +277,21 @@ int main() {
 
         int angle = 0;
         if (twoLineChecker == false) {
+		cout << endl << "linesNum" << lines.size() << endl;
 			if (lines.size() > 0){
 				Point p0(lines[0][0], lines[0][1]);
 				Point p1(lines[0][2], lines[0][3]);
-				double k0 = (p0.y - p1.y) * 1.0 / (p0.x - p1.x);
-
+				double k0 = (p1.y - p0.y) * 1.0 / (p0.x - p1.x);
+				
+				
+				cout << endl << "P0:" << p0 << "P1:" << p1 << "k0:" << k0<< endl;
                 double temp1 = oldAngle;
 				// calculate the angle to turn
                 angle = getAngleBySlope(k0);
 				turnTo(angle-temp1);
-                cout << "turn angle: " << (angle - temp1) << endl;
+                //cout << "turn angle: " << (angle - temp1) << endl;
 
-                drawDetectLines2(canvas, result, sc, 1);
+                drawDetectLines2(canvas, lines, sc, 1);
             }
             
             imshow("canvas", canvas);
@@ -293,8 +304,8 @@ int main() {
             double temp2 = oldAngle;
             // calculate the angle to turn
             angle = getAngleByPoint(pointX[0], pointX[1]);
-            turnTo(angle - temp2);
-            cout << "turn angle: " << (angle - temp2) << endl;
+             turnTo(angle - temp2);
+            //cout << "turn angle: " << (angle - temp2) << endl;
 
             cout << "begin" << endl;
             for (vector<Vec4i>::iterator it = lines.begin(); it != lines.end(); it++)
@@ -306,13 +317,14 @@ int main() {
         }
 
 
-        drawDetectLines(imgROI, lines, sc);
+        drawDetectLines(image, lines, sc);
         imshow("image", image);
 
         lines.clear();
         result.clear();
 
         waitKey(1);
+        cout << ++counter;
     }
 
     return 0;

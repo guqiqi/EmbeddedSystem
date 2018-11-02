@@ -24,6 +24,9 @@ int main() {
 
     // stop until run to 1m
     while (totalLeft < 1000) {
+	controlLeft(FORWARD, 10);
+        controlRight(FORWARD, 10);
+
         resetCounter();
         delay(1000);
         getCounter(&readingLeft, &readingRight);
